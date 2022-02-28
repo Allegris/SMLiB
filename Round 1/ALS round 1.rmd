@@ -123,8 +123,8 @@ Please - do not use space or funny letters in your team name.
 
 ```{r}
 
-team_name        <- "team_palle"
-team_people      <- c("Palle", "Thomas", "Asger")
+team_name        <- "team_NA"
+team_people      <- c("Nicklas", "Astrid")
 team_error_rate  <- test_rmse
 team_predictions <- submission
 
