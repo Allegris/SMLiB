@@ -125,6 +125,10 @@ submission <- tibble(predicted)
 
 head(submission)
 
+# Overwrite submission above:
+# We use the predictions we made using some other (python) code, this is just the results:
+submission <- readRDS("Round 1/TCGA final predictions df.rds")
+
 ```
 
 # Submitting your answer
