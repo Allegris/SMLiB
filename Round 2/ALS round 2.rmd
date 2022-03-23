@@ -75,6 +75,44 @@ predicted <- predict(fit, s = best_lambda, newx = x)
 
 ```
 
+```{r}
+
+# Elastic net with alpha = 0.5 (combination of ridge and lasso)
+
+# Always make the same split
+set.seed(0)
+
+x <- model.matrix(response ~ ., data_train)[, -1]
+y <- data_train$response
+# Randomly sample a subset of numbers between 1 and nrow(x)
+# We use 80% for training and 20% for evaluation
+train <- sample(1 : nrow(x), nrow(x) / 5)
+test <- (-train)
+
+# Train fit
+fit <- glmnet(x[train, ], y[train], alpha = 0.5)
+
+# Find best lambda using CV
+cv_lambda <- cv.glmnet(x[train, ], y[train], alpha = 0.5)
+#plot(cv_lambda)
+best_lambda <- cv_lambda$lambda.min
+
+# Predict
+predicted <- predict(fit, s = best_lambda, newx = x[test, ])
+
+# We compare with the observed values and calculate RMSE
+observed  <- y[test]
+mse       <- mean((observed-predicted)^2)
+(rmse     <- sqrt(mse)) # 0.5261383
+
+test_rmse <- rmse # Our guess on the general rmse of the model (very unprecise!)
+
+# Fit model on all our data using found best lambda
+fit <- glmnet(x, y, alpha = 1)
+predicted <- predict(fit, s = best_lambda, newx = x)
+
+
+```
 
 
 ```{r}
@@ -115,8 +153,6 @@ predicted <- predict(fit, s = best_lambda, newx = x)
 
 
 ```
-
-
 
 
 # Plot of testfold observed and predicted values and residuals
