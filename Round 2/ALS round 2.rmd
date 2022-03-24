@@ -8,11 +8,10 @@ editor_options:
 
 ```{r}
 
-library(tidyverse)
 library(glmnet)
+library(tidyverse)
 
-df <- read_rds(path = "datasets/ALS_data_regression/ALS_progression_rate.1822x370.rds") 
-df <- read_rds(path = "ALS_progression_rate.1822x370.rds")  %>% tbl_df()
+df <- read_rds(file = "datasets/ALS_data_regression/ALS_progression_rate.1822x370.rds")  %>% tbl_df()
 
 df <- df %>% rename(response = dFRS)
 
@@ -117,7 +116,7 @@ predicted <- predict(fit, s = best_lambda, newx = x)
 
 ```{r}
 
-# THE LASSO
+# THE LASSO - final model round 2
 
 # Always make the same split
 set.seed(0)
@@ -222,7 +221,7 @@ Please - do not use space or funny letters in your team name.
 team_name        <- "team_NA"
 team_people      <- c("Nicklas", "Astrid")
 team_error_rate  <- test_rmse
-team_predictions <- submission
+team_predictions <- submission # This should be a tibble with a column called "predicted"
 
 #
 # Always run this code
@@ -233,7 +232,7 @@ team_predictions <- team_predictions %>% select(predicted)
 
 # Save all the stuff in one object
 write_rds(x = list(team_name, team_people, team_error_rate, team_predictions), 
-          path = paste("als_progression.", team_name, ".rds", sep=""))
+          file = paste("als_progression.", team_name, ".rds", sep=""))
 
 ```
 
@@ -245,18 +244,21 @@ files   <- Sys.glob("als_progression.*.rds")
 results <- tibble(filename = files, team_name=NA, team_people=NA, team_rmse=NA,n=NA, mean=NA)
 
 for (i in 1:nrow(results)) {
-  x <- read_rds(path = as.character(results$filename[i]))
+  x <- read_rds(file = as.character(results$filename[i]))
   results$team_name[i]        <- x[[1]]
   results$team_people[i]      <- paste(x[[2]], collapse=",", sep=" ")
   results$team_rmse[i]        <- x[[3]]
   y                           <- x[[4]]
   results$n                   <- nrow(y)
   results$mean                <- mean(y$predicted, na.rm = T)
+  results$submission[i]       <- list(x[[4]])
 }
 
 rm(x,y)
 
 results %>% select(-filename)
+
+results$submission[[1]]
 
 ```
 

@@ -15,11 +15,7 @@ editor_options:
 
 library(tidyverse)
 
-```
-
-```{r}
-
-df <- read_rds(path = "datasets/TCGA_cancer_classification/miniTCGA.3349x4006.rds") 
+df <- read_rds(file = "miniTCGA.3349x4006.rds") 
 
 ```
 
@@ -121,13 +117,9 @@ predicted <- predict(fit, newdata = data_predict, type = "response")
 predicted <- round(predicted)+1 # Convert probabilities to 1 or 2
 predicted <- levels(data_train$response)[predicted]
 
-submission <- tibble(predicted)
+submission <- tibble(predicted = predicted)
 
 head(submission)
-
-# Overwrite submission above:
-# We use the predictions we made using some other (python) code, this is just the results:
-submission <- readRDS("Round 1/TCGA final predictions df.rds")
 
 ```
 
@@ -148,8 +140,8 @@ Please - do not use space or funny letters in your team name.
 
 ```{r}
 
-team_name        <- "team_NA"
-team_people      <- c("Nicklas", "Astrid")
+team_name        <- "team_palle"
+team_people      <- c("Palle", "Thomas", "Asger")
 team_error       <- test_error
 team_predictions <- submission
 
@@ -162,7 +154,7 @@ team_predictions <- team_predictions %>% select(predicted)
 
 # Save all the stuff in one object
 write_rds(x = list(team_name, team_people, team_error, team_predictions), 
-          path = paste("minitcga_cancer_classification.", team_name, ".rds", sep=""))
+          file = paste("minitcga_cancer_classification.", team_name, ".rds", sep=""))
 
 ```
 
@@ -174,18 +166,21 @@ files   <- Sys.glob("minitcga_cancer_classification.*.rds")
 results <- tibble(filename = files)
 
 for (i in 1:nrow(results)) {
-  x <- read_rds(path = as.character(results$filename[i]))
+  x <- read_rds(file = as.character(results$filename[i]))
   results$team_name[i]     <- x[[1]]
   results$team_people[i]   <- paste(x[[2]], collapse=",", sep=" ")
   results$team_error[i]    <- x[[3]]
   y                        <- x[[4]]
   results$n_tumor          <- sum(y$predicted=="Tumor")
   results$n_normal         <- sum(y$predicted=="Normal")
+  results$submission[i]    <- list(x[[4]])
 }
 
 rm(x,y)
 
 results %>% select(-filename)
+
+results$submission[[1]]
 
 ```
 

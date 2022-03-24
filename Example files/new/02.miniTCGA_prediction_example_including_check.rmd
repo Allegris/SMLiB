@@ -15,11 +15,7 @@ editor_options:
 
 library(tidyverse)
 
-```
-
-```{r}
-
-df <- read_rds(file = "datasets/TCGA_cancer_classification/miniTCGA.3349x4006.rds") 
+df <- read_rds(file = "miniTCGA.3349x4006.rds") 
 
 ```
 
@@ -49,8 +45,6 @@ dim(data_train)
 
 ```{r}
 
-# Round 2
-
 # Always make the same split
 set.seed(0)
 
@@ -59,7 +53,7 @@ trainfold <- data_train %>% sample_frac(size=0.80)
 testfold  <- setdiff(data_train, trainfold)
 
 # We fit our model (simple logistic regression on pc1 and pc2 with interaction)
-fit <-  glm(response ~ pc1 + pc2 + pc3 + AQP2.359 + HMGCS2.3158 + GPD1.2819 + LOC284578.284578 + CST1.1469 + CHRDL1.91851, data = trainfold, family=binomial(link='logit'))
+fit <-  glm(response ~ pc2 * pc3, data = trainfold, family=binomial(link='logit'))
 
 # We predict on the test fold
 predicted <- predict(fit, newdata = testfold, type = "response")
@@ -71,12 +65,6 @@ observed    <- testfold$response
 
 # Our guess on the general error rate of the model (very unprecise!)
 (test_error <- sum(observed!=predicted)/length(observed)) 
-
-# Fit on all data
-fit <-  glm(response ~ pc1 + pc2 + pc3 + AQP2.359 + HMGCS2.3158 + GPD1.2819 + LOC284578.284578 + CST1.1469 + CHRDL1.91851, data = data_train, family=binomial(link='logit'))
-predicted <- predict(fit, newdata = testfold, type = "response")
-predicted <- round(predicted)+1 # Convert probabilities to 1 or 2
-predicted <- levels(trainfold$response)[predicted]
 
 ```
 
@@ -123,19 +111,15 @@ The predictions must have the following column and the row order must be the sam
 
 ```{r}
 
-#fit <-  glm(response ~ pc2 * pc3, data = data_train, family=binomial(link='logit'))
+fit <-  glm(response ~ pc2 * pc3, data = data_train, family=binomial(link='logit'))
 
-#predicted <- predict(fit, newdata = data_predict, type = "response")
-#predicted <- round(predicted)+1 # Convert probabilities to 1 or 2
-#predicted <- levels(data_train$response)[predicted]
+predicted <- predict(fit, newdata = data_predict, type = "response")
+predicted <- round(predicted)+1 # Convert probabilities to 1 or 2
+predicted <- levels(data_train$response)[predicted]
 
-submission <- tibble(predicted)
+submission <- tibble(predicted = predicted)
 
 head(submission)
-
-# Overwrite submission above:
-# We use the predictions we made using some other (python) code, this is just the results:
-#submission <- readRDS("Round 1/TCGA final predictions df.rds")
 
 ```
 
@@ -156,8 +140,8 @@ Please - do not use space or funny letters in your team name.
 
 ```{r}
 
-team_name        <- "team_NA"
-team_people      <- c("Nicklas", "Astrid")
+team_name        <- "team_palle"
+team_people      <- c("Palle", "Thomas", "Asger")
 team_error       <- test_error
 team_predictions <- submission
 
