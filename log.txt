@@ -1,0 +1,15 @@
+2022-04-26 10:24:19 Doing lda 
+2022-04-26 10:24:20 Done lda Runtime: 1 
+2022-04-26 10:24:20 Doing glm 
+2022-04-26 10:24:21 Done glm Runtime: 1 
+2022-04-26 10:24:21 Doing qda 
+2022-04-26 10:24:22 Done qda Runtime: 1 
+2022-04-26 10:24:22 Doing glmnet 
+2022-04-26 10:24:36 Done glmnet Runtime: 14 
+2022-04-26 10:24:36 Doing rf 
+2022-04-26 10:25:30 Done rf Runtime: 54 
+2022-04-26 10:25:30 Doing gbm 
+2022-04-26 10:26:53 Done gbm Runtime: 83 
+2022-04-26 10:39:37 Doing lda 
+2022-04-26 10:40:37 Doing lda 
+2022-04-26 10:43:02 Doing lda 

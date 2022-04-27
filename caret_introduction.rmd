@@ -1,0 +1,212 @@
+---
+output:
+  html_document: 
+    theme: readable
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, message=F, warning=F}
+
+library(tidyverse)
+library(cowplot)
+
+text_base_size   <- 10
+
+ggplot_text_size <- text_base_size / ggplot2::.pt # Trick to make geom_text etc. same size and theme
+
+theme_set(theme_cowplot(font_size = text_base_size, rel_small = 1, rel_tiny = 1, rel_large = 1))
+
+knitr::opts_chunk$set(fig.width = 120/25.4)
+knitr::opts_chunk$set(fig.height = 80/25.4)
+knitr::opts_chunk$set(dpi = 200)
+
+```
+
+# The Sonar dataset
+
+```{r}
+
+library(caret)
+library(mlbench)
+
+data(Sonar)
+
+Sonar <- as_tibble(Sonar) %>%
+  select(Class, everything())
+
+Sonar
+
+```
+
+
+## Split in train/test
+
+```{r}
+
+set.seed(1)
+
+inTraining <- createDataPartition(Sonar$Class, p = .90, list = FALSE) # We use 90% of data for training
+
+training    <- Sonar[ inTraining,]
+validation  <- Sonar[-inTraining,]
+
+```
+
+## Always make a PCA
+
+```{r}
+
+r  <- prcomp(x = training %>% select(-Class))
+
+pd <- r$x %>% 
+  as_tibble() %>%
+  bind_cols(Class=training$Class) %>%
+  {.}
+
+ggplot(pd,aes(x=PC1, y=PC2, color=Class))+
+  geom_point()
+
+```
+
+# Caret
+
+## getModelInfo
+
+```{r}
+
+x <- getModelInfo(model = "glmnet")[[1]]
+x$label
+x$type
+x$parameters
+
+training_x <- training %>% select(-Class) %>% as.data.frame()
+training_y <- training$Class
+
+```
+
+## Running a model with default tuning
+
+```{r}
+
+trControl <- trainControl(method = "repeatedcv", number = 5, repeats = 3, verboseIter = F)
+  
+fit <- train(x = training_x, 
+             y = training_y, 
+        method = "glmnet",
+     trControl = trControl
+    )
+  
+print(fit)
+  
+ggplot(fit)
+
+```
+
+## Finer grid
+
+```{r}
+
+trControl <- trainControl(method = "repeatedcv", number = 5, repeats = 3, verboseIter = F)
+
+fit <- train(x = training_x, 
+             y = training_y, 
+        method = "glmnet",
+    tuneLength = 10,
+     trControl = trControl
+    )
+  
+print(fit)
+  
+mean(fit$resample$Accuracy)
+
+ggplot(fit)
+
+# You can also use the fully fitted model directly on new data
+predict(fit, newdata = validation)
+  
+# ...and since we know the truth we can also get the accuracy for this validation set.
+sum(predict(fit, newdata = validation)==validation$Class)/nrow(validation)
+
+```
+
+## Running different models
+
+```{r}
+
+trControl <- trainControl(method = "repeatedcv", number = 5, repeats = 3, 
+                          verboseIter = F)
+
+result    <- tibble(method = c("lda", "glm", "qda", "glmnet", "rf", "gbm"),
+                  accuracy = NA, 
+                   runtime = NA, 
+                      plot = NA
+                  )
+
+for(i in 1:nrow(result)) {
+  
+  method <- result$method[i]
+  
+  cat(paste(Sys.time(), "Doing", method, "\n"), file = "log.txt", append=T)
+  
+  starttime <- as.integer(Sys.time())
+  
+  fit <- train(x = training_x, 
+               y = training_y, 
+          method = method,
+      tuneLength = 10,
+       trControl = trControl
+      )
+  
+  runtime <- as.integer(Sys.time()) - starttime
+
+  # Save plot if possible
+  if (fit$modelInfo$parameters[1,1]!="parameter") { 
+    result$plot[i] <- list(ggplot(fit)) 
+  } 
+  # Save performance and runtime
+  result$accuracy[i] <- mean(fit$resample$Accuracy) # Mean of all the folds for best tunning parameters.
+  result$runtime[i]  <- runtime
+
+  cat(paste(Sys.time(), "Done", method, "Runtime:", runtime, "\n"), file = "log.txt", append=T)
+
+}
+
+```
+
+# Results
+
+## Plots
+
+```{r}
+
+for(i in 1:nrow(result)) {
+  plot1 <- result$plot[[i]]
+  plot_is_empty <- is.na(plot1)[[1]]
+  if(plot_is_empty) { 
+    next
+  } else {
+    plot(plot1 + ggtitle(result$method[i])) 
+  }
+}
+
+
+```
+
+## Table of accuracy
+
+```{r}
+
+result
+
+```
+
+## Plot of accuracy vs runtime
+
+```{r}
+
+ggplot(result, aes(x=runtime, y=accuracy, color=method)) + geom_point() + ylim(0,1)
+
+```
+
+

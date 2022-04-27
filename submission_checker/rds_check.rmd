@@ -1,0 +1,43 @@
+---
+output: html_document
+--- 
+
+```{r, echo=F, warning=F,message=F}
+
+library(tidyverse)
+
+x <- read_rds(file = "minitcga_cancer_classification.team_NA.rds")
+#x <- read_rds(file = "als_progression.team_NA.rds")
+
+```
+
+## Team name (should be a name)
+
+```{r}
+x[[1]]
+```
+
+## Team members (vector of names)
+
+```{r}
+x[[2]]
+```
+
+## Estimated RMSE/error rate - a number from 0 to 1 (error rate) or 0 to Inf (RMSE)
+
+```{r}
+x[[3]]
+```
+
+## Submitted values (tibble, with a column called predicted)
+
+* ALS: values
+
+* TCGA: Tumor / Normal
+
+```{r}
+
+x[[4]]
+
+```
+
